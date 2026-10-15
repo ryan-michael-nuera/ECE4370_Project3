@@ -17,13 +17,19 @@ with open("Project3.json", "r") as f:
 X_train = np.array(data["train_D"])
 y_train = np.array(data["train_y"])
 
-X_val = np.array(data["test_D"])
-y_val = np.array(data["test_y"])
+# Validation set: used ONLY to choose gamma
+X_val = np.array(data["validation_D"])
+y_val = np.array(data["validation_y"])
+
+# Testing set: used ONLY once, for the final accuracy
+X_test = np.array(data["test_D"])
+y_test = np.array(data["test_y"])
 
 gammas = [1 / i for i in range(10, 81, 10)]
 
 best_gamma = None
 best_accuracy = -1
+best_svm = None
 
 for gamma in gammas:
     svm = SVC(kernel="rbf", gamma=gamma)
@@ -32,17 +38,17 @@ for gamma in gammas:
     predictions = svm.predict(X_val)
     accuracy = accuracy_score(y_val, predictions)
 
-    print(f"Gamma = {gamma:.5f}, Accuracy = {accuracy:.4f}")
+    print(f"Gamma = 1/{round(1 / gamma)} ({gamma:.5f}), Validation accuracy = {accuracy:.4f}")
 
     if accuracy > best_accuracy:
         best_accuracy = accuracy
         best_gamma = gamma
+        best_svm = svm
 
-final_svm = SVC(kernel="rbf", gamma=best_gamma)
-final_svm.fit(X_train, y_train)
+# Apply the model with the best gamma to the testing data
+test_predictions = best_svm.predict(X_test)
+test_accuracy = accuracy_score(y_test, test_predictions)
 
-test_predictions = final_svm.predict(X_val)
-test_accuracy = accuracy_score(y_val, test_predictions)
-
-print("Best gamma:", best_gamma)
-print("Testing accuracy:", test_accuracy)
+print(f"\nBest gamma: 1/{round(1 / best_gamma)} ({best_gamma:.5f})")
+print(f"Validation accuracy at best gamma: {best_accuracy * 100:.2f}%")
+print(f"Testing accuracy: {test_accuracy * 100:.2f}%")
